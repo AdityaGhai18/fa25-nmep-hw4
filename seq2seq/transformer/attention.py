@@ -111,13 +111,18 @@ class MultiHeadAttention(nn.Module):
             V: torch.Tensor of shape (B, num_heads, T, value_length)
             mask: Optional boolean torch.Tensor, broadcastable to (B, num_heads, T, T).
         """
-
-        scores = torch.matmul(Q, K.transpose(-2, -1)) / (self.qk_length ** 0.5)  # this will give (B, num_heads, T, T)
         #transpose with -2, -1 to swap last two dims
         #so that K goes from (B, num_heads, T, qk_length) to (B, num_heads, qk_length, T)
+        scores = torch.matmul(Q, K.transpose(-2, -1)) / (self.qk_length ** 0.5)  # this will give (B, num_heads, T, T)
 
+            
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, float('-inf'))
+            assert mask.dtype == torch.bool, "Mask must be boolean"
+            #print(mask.shape, scores.shape)
+            # Mask is [B,1,1,T], we need to expand dims to [B,1,T,T] in encode and decode
+            assert mask.shape[-2] == scores.shape[-2] and mask.shape[-1] == scores.shape[-1], "Mask shape mismatch"
+
+            scores = scores.masked_fill(mask, float('-inf'))
 
         attention_weights = torch.softmax(scores, dim=-1)  # (B, num_heads, T, T)
 

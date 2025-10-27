@@ -23,7 +23,7 @@ run = wandb.init(
 )
 
 
-def decode(model, src_sentence, max_len=100, device="cpu"):
+def decode(model, src_sentence, max_len=100, device=1):
     model.eval()
     src_tensor = tokenizer.encode(src_sentence).to(device)
 
@@ -62,7 +62,7 @@ def train_nmt():
     dataset = FrEnDataset(data_path)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
 
-    device = 3
+    device = 1
 
     vocab_size = len(tokenizer.vocab)
     num_layers = 6
@@ -113,10 +113,12 @@ def train_nmt():
         for i, (src, tgt) in enumerate(data_tqdm):
             try:
                 src, tgt = src.to(device), tgt.to(device)
-
+                tgt = tgt[:, :max_length] #truncate the target if its getting too long past the 200 max token limit we set
                 tgt_input = tgt[:, :-1]  # all tokens except last one
                 # Target should be shifted by 1 position since we're predicting next token
                 tgt_output = tgt[:, 1:]  # all tokens except first one
+                tgt_output = tgt_output.long()
+
 
                 optimizer.zero_grad()
 

@@ -183,10 +183,16 @@ class Encoder(nn.Module):
         The forward pass of the Encoder.
         """
         # Expecting x to be token ids of shape (B, T)
-
+        x = x.long() 
         x = self.token_embedding(x) 
 
         x = self.positional_encoding(x)
+        
+        ######mask dim not matching my scores dim fix
+        if src_mask is not None and src_mask.dim() == 4:
+            # Mask is [B,1,1,T], we want to expand dims to [B,1,T,T]
+            src_mask = src_mask.expand(-1, 1, x.size(1), -1)  # B, 1, T, T
+        ######mask dim not matching my scores dim fix
 
         for layer in getattr(self, "layers", []):
             x = layer(x, src_mask)

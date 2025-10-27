@@ -80,7 +80,7 @@ def main():
     ).to(device)
 
     # Load the trained model weights
-    model_path = "fr_en_euro_latest.pt"
+    model_path = "fr_en_euro_0.pt"
     try:
         model.load_state_dict(
             torch.load(model_path, map_location=device, weights_only=True)["model"]

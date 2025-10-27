@@ -163,8 +163,21 @@ class Decoder(nn.Module):
         """
         The forward pass of the Decoder.
         """
+        x = x.long() 
         x = self.token_embedding(x)
         x = self.positional_encoding(x)
+
+
+        ######mask dim not matching my scores dim fix
+        if tgt_mask is not None and tgt_mask.dim() == 4:
+            tgt_mask = tgt_mask.expand(-1, 1, x.size(1), -1)  # B,1,T,T
+
+        if src_mask is not None and src_mask.dim() == 4:
+            # src_mask expected shape for cross-attn: [B,1,T_dec,T_enc]
+            src_mask = src_mask.expand(-1, 1, x.size(1), enc_x.size(1))
+        ######mask dim not matching my scores dim fix
+
+
         for layer in self.layers:
             x = layer(x, enc_x, tgt_mask, src_mask)
         x = self.out(x)
