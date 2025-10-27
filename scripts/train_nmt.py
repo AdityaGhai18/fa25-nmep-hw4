@@ -12,7 +12,7 @@ from seq2seq.transformer.transformer import Transformer
 from seq2seq.data.fr_en import FrEnDataset, collate_fn, tokenizer
 
 run = wandb.init(
-    entity="<INSERT ENTITY HERE>",
+    entity="aditya_ghai-university-of-california-berkeley",
     project="transformer",
     config={
         "learning_rate": 0.00005,
@@ -62,7 +62,7 @@ def train_nmt():
     dataset = FrEnDataset(data_path)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
 
-    device = 1
+    device = 3
 
     vocab_size = len(tokenizer.vocab)
     num_layers = 6
@@ -100,8 +100,8 @@ def train_nmt():
         device=device,
     ).to(device)
 
-    # TODO: loss shouldn't include pad tokens, so it should ignore pad token ids
-    criterion = nn.CrossEntropyLoss(ignore_index=...)
+    # Loss shouldn't include pad tokens, so use pad_token_id as ignore_index
+    criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
     optimizer = optim.AdamW(model.parameters(), lr=base_lr, betas=[0.9, 0.98], eps=1e-9)
     scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
 
@@ -114,11 +114,9 @@ def train_nmt():
             try:
                 src, tgt = src.to(device), tgt.to(device)
 
-                tgt_input = tgt[:, :-1]
-
-                # TODO: if the input is up to the second-last token,
-                # what should the output be?
-                tgt_output = ...
+                tgt_input = tgt[:, :-1]  # all tokens except last one
+                # Target should be shifted by 1 position since we're predicting next token
+                tgt_output = tgt[:, 1:]  # all tokens except first one
 
                 optimizer.zero_grad()
 

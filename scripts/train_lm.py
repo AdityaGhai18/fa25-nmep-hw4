@@ -12,7 +12,7 @@ from seq2seq.transformer.transformer import Decoder
 from seq2seq.data.screenplay import ScreenplayDataset, collate_fn, tokenizer
 
 run = wandb.init(
-    entity="<INSERT ENTITY HERE>",
+    entity="aditya_ghai-university-of-california-berkeley",
     project="transformer",
     config={
         "learning_rate": 0.00005,
@@ -64,7 +64,7 @@ def make_pad_mask(q, k):
     return pad_mask
 
 
-def make_no_peak_mask(q, k, device=0):
+def make_no_peak_mask(q, k, device=1):
     # Create a look-ahead mask to prevent attending to future tokens
     len_q, len_k = q.size(1), k.size(1)
     mask = torch.triu(
@@ -78,7 +78,7 @@ def train_lm():
     dataset = ScreenplayDataset(data_path)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
 
-    device = 0
+    device = 1
 
     vocab_size = len(tokenizer.vocab)
     num_layers = 6
@@ -114,8 +114,8 @@ def train_lm():
         dropout=dropout,
     ).to(device)
 
-    # TODO: loss shouldn't include pad tokens, so it should ignore pad token ids
-    criterion = nn.CrossEntropyLoss(ignore_index=...)
+    # Loss shouldn't include pad tokens, so ignore them in the loss calculation
+    criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id) 
     optimizer = optim.AdamW(model.parameters(), lr=base_lr, betas=[0.9, 0.98], eps=1e-9)
     scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
 
@@ -128,8 +128,8 @@ def train_lm():
             try:
                 paragraph = paragraph.to(device)
 
-                para_input = paragraph[:, :-1]
-                para_output = ...  # TODO: copy/modify the line from train_nmt.py
+                para_input = paragraph[:, :-1]  # all tokens except last one
+                para_output = paragraph[:, 1:]    # all tokens except first one - shifted by 1 position cause we want NEXT token prediction fml
 
                 optimizer.zero_grad()
 
