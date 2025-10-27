@@ -8,3 +8,4 @@ ckpts
 *.egg-info
 *.pt
 europarl/
+data/nmt/fr-en.tgz
